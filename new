@@ -1,0 +1,7 @@
+echo "# coding-interview-agent" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/bhuvaneswari-visakha/coding-interview-agent.git
+git push -u origin main
