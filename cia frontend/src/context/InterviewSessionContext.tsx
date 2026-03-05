@@ -48,10 +48,7 @@ const createProgressMap = (questions: InterviewQuestion[]): Record<string, Quest
     return accumulator
   }, {})
 
-const createCodeMap = (
-  questions: InterviewQuestion[],
-  language?: ProgrammingLanguage,
-): Record<string, string> =>
+const createCodeMap = (questions: InterviewQuestion[]): Record<string, string> =>
   questions.reduce<Record<string, string>>((accumulator, question) => {
     // Always start with empty code instead of starter code
     accumulator[question.id] = ''
@@ -70,7 +67,7 @@ const interviewSessionReducer = (
         setup,
         questions,
         currentQuestionIndex: 0,
-        codeByQuestionId: createCodeMap(questions, setup.language),
+        codeByQuestionId: createCodeMap(questions),
         progressByQuestionId: createProgressMap(questions),
         totalScore: 0,
         elapsedInSeconds: 0,
@@ -90,7 +87,7 @@ const interviewSessionReducer = (
           ...state.setup,
           language: action.payload.language,
         },
-        codeByQuestionId: createCodeMap(state.questions, action.payload.language),
+        codeByQuestionId: createCodeMap(state.questions),
       }
     }
     case 'UPDATE_CODE': {
@@ -150,7 +147,7 @@ const interviewSessionReducer = (
     case 'RESTORE_INTERVIEW': {
       const { snapshot } = action.payload
       const hydratedCodeMap = {
-        ...createCodeMap(snapshot.questions, snapshot.setup.language),
+        ...createCodeMap(snapshot.questions),
         ...snapshot.codeByQuestionId,
       }
       const hydratedProgressMap = {

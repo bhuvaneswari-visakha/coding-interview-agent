@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Button } from '../components/common/Button'
 import { useInterviewSession } from '../hooks/useInterviewSession'
 import { generateFeedback, getInterviewById } from '../services/interviewApi'
 

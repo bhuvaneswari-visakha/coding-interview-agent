@@ -1,23 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../common/Button'
 import { useInterviewSession } from '../../hooks/useInterviewSession'
-import type { InterviewQuestion, ProgrammingLanguage } from '../../types/interview'
 
 interface SolutionPanelProps {
-  question: InterviewQuestion
   solution: string
-  language: ProgrammingLanguage
-  onLanguageChange: (language: ProgrammingLanguage) => void
   onClose: () => void
   isSolutionLoading?: boolean
   solutionError?: string
 }
 
 export const SolutionPanel = ({ 
-  question, 
   solution, 
-  language, 
-  onLanguageChange, 
   onClose,
   isSolutionLoading = false,
   solutionError = ''

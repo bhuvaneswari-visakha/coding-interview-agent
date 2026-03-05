@@ -23,10 +23,7 @@ export const mapInterviewQuestion = (item: InterviewQuestionApi): InterviewQuest
   estimatedMinutes: item.estimated_minutes,
 })
 
-const createCodeMap = (
-  questions: InterviewQuestion[],
-  language: ProgrammingLanguage,
-): Record<string, string> =>
+const createCodeMap = (questions: InterviewQuestion[]): Record<string, string> =>
   questions.reduce<Record<string, string>>((accumulator, question) => {
     accumulator[question.id] = ''
     return accumulator
@@ -70,7 +67,7 @@ export const buildInterviewSnapshot = ({
     },
     questions,
     currentQuestionIndex: getCurrentQuestionIndex(interview),
-    codeByQuestionId: createCodeMap(questions, language),
+    codeByQuestionId: createCodeMap(questions),
     progressByQuestionId: createProgressMap(interview),
     totalScore: interview.score,
     elapsedInSeconds: 0,

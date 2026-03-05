@@ -9,7 +9,6 @@ import {
   deleteInterview,
   fetchDashboard,
   getActiveInterviewSetup,
-  getInterviewById,
   getStoredInterviewApi,
   setActiveInterviewId,
   setActiveInterviewSetup,

@@ -104,10 +104,7 @@ export function QuestionPage({
         ) : null}
         {isSolutionVisible ? (
           <SolutionPanel
-            question={question}
             solution={solution}
-            language={language}
-            onLanguageChange={onLanguageChange}
             onClose={onToggleSolution}
             isSolutionLoading={isSolutionLoading}
             solutionError={solutionError}

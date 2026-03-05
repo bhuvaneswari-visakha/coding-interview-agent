@@ -660,6 +660,7 @@ const buildStoredQuestionsFromStructured = (
         [{ input: '', expected_output: '0' }],
         SCORE_BY_DIFFICULTY[fallbackDifficulty],
       ),
+      feedback: null,
     })
   }
 
@@ -698,7 +699,11 @@ const buildStoredQuestions = (raw: string, interviewId: string): StoredInterview
         expected_output: normalizeOutputValue(item.expected_output),
       }),
     )
-    const testCases = withWeightedCases(questionId, parsedCases, maxScore)
+    const testCases = withWeightedCases(
+      questionId,
+      parsedCases.length ? parsedCases : [{ input: '', expected_output: '0' }],
+      maxScore,
+    )
 
     const sampleInput = normalizeOutputValue(draft.sampleInput || testCases[0]?.input || '')
     const sampleOutput = normalizeOutputValue(draft.sampleOutput || testCases[0]?.expected_output || '')
@@ -713,22 +718,24 @@ const buildStoredQuestions = (raw: string, interviewId: string): StoredInterview
         : []
 
     return {
-      interview_id: interview.interview_id,
-      user_id: interview.user_id,
-      status: interview.status,
-      total_score: interview.score,
-      started_at: interview.started_at,
-      completed_at: interview.completed_at,
-      feedback_summary: interview.feedback_summary ?? undefined,
-      question_results: interview.questions.map((q) => ({
-        question_id: q.question_id,
-        title: q.title,
-        difficulty: q.difficulty,
-        attempts: q.attempts,
-        score: q.earned_score,
-        is_solved: q.is_solved,
-        feedback: q.feedback ?? undefined,
-      })),
+      question_id: questionId,
+      external_id: `generated-${index + 1}`,
+      title: draft.title,
+      statement: draft.statement,
+      difficulty: draft.difficulty,
+      tags: draft.tags,
+      constraints: draft.constraints,
+      examples,
+      hint: draft.hint,
+      starter_code: DEFAULT_STARTER_CODE,
+      estimated_minutes: draft.difficulty === 'Hard' ? 35 : draft.difficulty === 'Medium' ? 25 : 18,
+      order_index: index,
+      attempts: 0,
+      is_solved: false,
+      earned_score: 0,
+      max_score: maxScore,
+      test_cases: testCases,
+      feedback: null,
     }
   })
 }
