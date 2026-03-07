@@ -22,10 +22,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=os.getenv("APP_NAME", "CIA Backend"), lifespan=lifespan)
 
-frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+frontend_origin = os.getenv("FRONTEND_ORIGIN", "https://coding-interview-agent-project.onrender.com")
 allowed_origins = [origin.strip() for origin in frontend_origin.split(",") if origin.strip()]
 if not allowed_origins:
-    allowed_origins = ["http://localhost:5173"]
+    allowed_origins = ["https://coding-interview-agent-project.onrender.com"]
 
 app.add_middleware(
     CORSMiddleware,
