@@ -12,8 +12,22 @@ HF_API_BASE_URL = os.getenv("HF_API_BASE_URL", "https://router.huggingface.co").
 HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")
 REPO_ID = os.getenv("REPO_ID", "")
 HF_MAX_NEW_TOKENS = int(os.getenv("HF_MAX_NEW_TOKENS", 1024))
-HF_TEMPERATURE = float(os.getenv("HF_TEMPERATURE", 0.6))
-HF_TIMEOUT_SECONDS = float(os.getenv("HF_TIMEOUT_SECONDS", 120))
+HF_TEMPERATURE = float(os.getenv("HF_TEMPERATURE", 0.8))
+HF_TIMEOUT_SECONDS = float(os.getenv("HF_TIMEOUT_SECONDS", 45))  # Reduced to 45 seconds
+
+# Reuse HTTP client for connection pooling
+_http_client: httpx.AsyncClient | None = None
+
+
+def _get_http_client() -> httpx.AsyncClient:
+    """Get or create a reusable HTTP client with connection pooling."""
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(
+            timeout=HF_TIMEOUT_SECONDS,
+            limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
+        )
+    return _http_client
 
 
 def _build_model_url() -> str:
@@ -101,10 +115,10 @@ async def generate_text(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=HF_TIMEOUT_SECONDS) as client:
-            response = await client.post(model_url, headers=headers, json=payload)
-            response.raise_for_status()
-            return _extract_generated_text(response.json())
+        client = _get_http_client()
+        response = await client.post(model_url, headers=headers, json=payload)
+        response.raise_for_status()
+        return _extract_generated_text(response.json())
     except httpx.HTTPStatusError as error:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

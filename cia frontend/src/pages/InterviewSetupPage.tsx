@@ -31,6 +31,7 @@ export function InterviewSetupPage() {
   const [language, setLanguage] = useState<ProgrammingLanguage>('python')
   const [durationInSeconds, setDurationInSeconds] = useState<number>(45 * 60)
   const [isStarting, setIsStarting] = useState(false)
+  const [loadingMessage, setLoadingMessage] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -49,9 +50,24 @@ export function InterviewSetupPage() {
     }
 
     setIsStarting(true)
+    setLoadingMessage('Generating interview questions...')
 
     try {
+      // Simulate progress messages
+      const progressTimer = setInterval(() => {
+        setLoadingMessage((prev) => {
+          if (prev === 'Generating interview questions...') return 'Analyzing difficulty levels...'
+          if (prev === 'Analyzing difficulty levels...') return 'Creating test cases...'
+          if (prev === 'Creating test cases...') return 'Almost ready...'
+          return prev
+        })
+      }, 3000)
+
       const interview = await startInterview()
+      clearInterval(progressTimer)
+      
+      setLoadingMessage('Setting up your interview...')
+      
       const snapshot = buildInterviewSnapshot({
         interview,
         userId: user.id,
@@ -73,6 +89,7 @@ export function InterviewSetupPage() {
       setError(err instanceof Error ? err.message : 'Unable to start interview. Please retry.')
     } finally {
       setIsStarting(false)
+      setLoadingMessage('')
     }
   }
 
@@ -151,6 +168,16 @@ export function InterviewSetupPage() {
             </p>
           ) : null}
 
+          {isStarting && loadingMessage ? (
+            <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent"></div>
+                <p className="text-sm font-medium text-cyan-200">{loadingMessage}</p>
+              </div>
+              <p className="mt-2 text-xs text-cyan-300/70">This may take 10-15 seconds. Please wait...</p>
+            </div>
+          ) : null}
+
           <div className="flex items-center justify-end gap-3">
             <Link
               to="/dashboard"
@@ -158,7 +185,7 @@ export function InterviewSetupPage() {
             >
               Cancel
             </Link>
-            <Button type="submit" className="min-w-44" isLoading={isStarting} loadingText="Building session...">
+            <Button type="submit" className="min-w-44" isLoading={isStarting} loadingText="Starting...">
               Start Interview
             </Button>
           </div>

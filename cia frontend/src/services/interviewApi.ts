@@ -99,13 +99,13 @@ const JUDGE0_LANGUAGE_IDS: Record<ProgrammingLanguage, number> = {
 
 const DEFAULT_STARTER_CODE: Record<ProgrammingLanguage, string> = {
   typescript:
-    "function solve(input: string): string {\n  // Parse stdin text and return output text\n  return ''\n}\n\nconst fs = require('fs')\nconst input = fs.readFileSync(0, 'utf8')\nprocess.stdout.write(solve(input))\n",
+    "function solve(input: string): string {\n  // Parse simple input (space-separated or newline-separated)\n  const lines = input.trim().split('\\n')\n  // Example: const n = parseInt(lines[0])\n  // Example: const arr = lines[1].split(' ').map(Number)\n  return ''\n}\n\nconst fs = require('fs')\nconst input = fs.readFileSync(0, 'utf8')\nprocess.stdout.write(solve(input))\n",
   javascript:
-    "function solve(input) {\n  // Parse stdin text and return output text\n  return '';\n}\n\nconst fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\nprocess.stdout.write(String(solve(input)));\n",
+    "function solve(input) {\n  // Parse simple input (space-separated or newline-separated)\n  const lines = input.trim().split('\\n');\n  // Example: const n = parseInt(lines[0]);\n  // Example: const arr = lines[1].split(' ').map(Number);\n  return '';\n}\n\nconst fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\nprocess.stdout.write(String(solve(input)));\n",
   python:
-    "def solve(data: str) -> str:\n    # Parse stdin text and return output text\n    return ''\n\nif __name__ == '__main__':\n    import sys\n    data = sys.stdin.read()\n    sys.stdout.write(solve(data))\n",
+    "def solve():\n    # Parse simple input (space-separated or newline-separated)\n    # Example: n = int(input())\n    # Example: arr = list(map(int, input().split()))\n    pass\n\nif __name__ == '__main__':\n    result = solve()\n    if result is not None:\n        print(result)\n",
   java:
-    "import java.io.*;\n\npublic class Main {\n    static String solve(String input) {\n        // Parse stdin text and return output text\n        return \"\";\n    }\n\n    public static void main(String[] args) throws Exception {\n        String input = new String(System.in.readAllBytes());\n        System.out.print(solve(input));\n    }\n}\n",
+    "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    static String solve(Scanner sc) {\n        // Parse simple input (space-separated or newline-separated)\n        // Example: int n = sc.nextInt();\n        // Example: int[] arr = new int[n];\n        // for (int i = 0; i < n; i++) arr[i] = sc.nextInt();\n        return \"\";\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        System.out.print(solve(sc));\n        sc.close();\n    }\n}\n",
 }
 
 const roundToTwo = (value: number) => Math.round(value * 100) / 100

@@ -21,7 +21,7 @@ class RegisterResponse(BaseModel):
 
 class LoginRequest(BaseModel):
     email: str = Field(pattern=EMAIL_PATTERN)
-    password: str = Field(min_length=6)
+    password: str  # No validation on login - just check if it matches
 
 
 class LoginResponse(BaseModel):

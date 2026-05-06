@@ -1,59 +1,41 @@
+import { forwardRef } from 'react'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import { motion } from 'framer-motion'
-import { cn } from '../../utils/cn'
 
-type NativeButtonProps = Omit<
-  ButtonHTMLAttributes<HTMLButtonElement>,
-  'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart' | 'onAnimationEnd'
->
-
-type ButtonProps = NativeButtonProps & {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children: ReactNode
+  variant?: 'primary' | 'secondary' | 'outline'
   isLoading?: boolean
   loadingText?: string
-  children: ReactNode
 }
 
-const MotionButton = motion.button
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ children, variant = 'primary', className = '', disabled, isLoading, loadingText, ...props }, ref) => {
+    const baseStyles = 'w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+    const variants = {
+      primary: 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl',
+      secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+      outline: 'border-2 border-purple-600 text-purple-600 hover:bg-purple-50'
+    }
 
-export function Button({
-  isLoading = false,
-  loadingText,
-  children,
-  disabled,
-  className,
-  ...props
-}: ButtonProps) {
-  const isDisabled = Boolean(disabled || isLoading)
-  const content = isLoading ? loadingText ?? children : children
-
-  return (
-    <MotionButton
-      type="button"
-      whileHover={isDisabled ? undefined : { scale: 1.01, y: -1 }}
-      whileTap={isDisabled ? undefined : { scale: 0.98 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className={cn(
-        'group relative inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-xl border border-cyan-200/30',
-        'bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 px-4 text-sm font-semibold text-slate-950',
-        'shadow-[0_12px_30px_rgba(56,189,248,0.35)] transition disabled:cursor-not-allowed disabled:opacity-70',
-        className,
-      )}
-      disabled={isDisabled}
-      {...props}
-    >
-      <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.45),transparent_50%)] opacity-70 transition group-hover:opacity-100" />
-
-      <span className="relative inline-flex items-center gap-2">
+    return (
+      <button
+        ref={ref}
+        className={`${baseStyles} ${variants[variant]} ${className}`}
+        disabled={disabled || isLoading}
+        {...props}
+      >
         {isLoading ? (
-          <motion.span
-            className="h-4 w-4 rounded-full border-2 border-slate-900/70 border-t-transparent"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
-            aria-hidden="true"
-          />
-        ) : null}
-        <span>{content}</span>
-      </span>
-    </MotionButton>
-  )
-}
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            {loadingText || 'Loading...'}
+          </span>
+        ) : children}
+      </button>
+    )
+  }
+)
+
+Button.displayName = 'Button'

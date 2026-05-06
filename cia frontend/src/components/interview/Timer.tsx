@@ -1,70 +1,70 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 
-type TimerProps = {
-  totalSeconds: number
-  elapsedSeconds: number
+interface TimerProps {
+  totalSeconds?: number
+  elapsedSeconds?: number
+  initialMinutes?: number
+  onTimeUp?: () => void
+  onExpire?: () => void
+  onTick?: (elapsed: number) => void
   isPaused?: boolean
-  onTick: (nextElapsedSeconds: number) => void
-  onExpire: () => void
 }
 
-const formatTimer = (remainingSeconds: number) => {
-  const safeRemaining = Math.max(0, remainingSeconds)
-  const minutes = Math.floor(safeRemaining / 60)
-  const seconds = safeRemaining % 60
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-}
-
-export function Timer({
-  totalSeconds,
-  elapsedSeconds,
-  isPaused = false,
-  onTick,
+export function Timer({ 
+  totalSeconds, 
+  elapsedSeconds = 0, 
+  initialMinutes, 
+  onTimeUp, 
   onExpire,
+  onTick,
+  isPaused = false 
 }: TimerProps) {
-  const didExpireRef = useRef(false)
+  // Support both old API (initialMinutes) and new API (totalSeconds/elapsedSeconds)
+  const total = totalSeconds ?? (initialMinutes ? initialMinutes * 60 : 0)
+  const [elapsed, setElapsed] = useState(elapsedSeconds)
+  
+  const remainingSeconds = Math.max(0, total - elapsed)
 
   useEffect(() => {
-    if (elapsedSeconds >= totalSeconds && !didExpireRef.current) {
-      didExpireRef.current = true
-      onExpire()
-    }
-
-    if (elapsedSeconds < totalSeconds) {
-      didExpireRef.current = false
-    }
-  }, [elapsedSeconds, onExpire, totalSeconds])
-
-  useEffect(() => {
-    if (isPaused || elapsedSeconds >= totalSeconds) {
-      return
-    }
-
-    const intervalId = window.setInterval(() => {
-      onTick(Math.min(totalSeconds, elapsedSeconds + 1))
+    if (isPaused || remainingSeconds <= 0) return
+    
+    const timer = setInterval(() => {
+      setElapsed((e) => {
+        const newElapsed = e + 1
+        onTick?.(newElapsed)
+        
+        if (newElapsed >= total) {
+          clearInterval(timer)
+          onTimeUp?.()
+          onExpire?.()
+          return total
+        }
+        return newElapsed
+      })
     }, 1000)
 
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [elapsedSeconds, isPaused, onTick, totalSeconds])
+    return () => clearInterval(timer)
+  }, [isPaused, onTimeUp, onExpire, onTick, total, remainingSeconds])
 
-  const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds)
-  const danger = remainingSeconds <= 300
-  const timerLabel = useMemo(() => formatTimer(remainingSeconds), [remainingSeconds])
+  const minutes = Math.floor(remainingSeconds / 60)
+  const seconds = remainingSeconds % 60
+  const isLow = remainingSeconds < 300 // 5 minutes
 
   return (
-    <div
-      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${
-        danger
-          ? 'border-rose-500/60 bg-rose-500/10 text-rose-300'
-          : 'border-slate-700 bg-slate-900 text-slate-200'
+    <motion.div
+      initial={{ scale: 0.9 }}
+      animate={{ scale: 1 }}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+        isLow ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white'
       }`}
-      role="timer"
-      aria-live="polite"
     >
-      <span className="text-xs uppercase tracking-wide text-slate-400">Time Left</span>
-      <span className="font-mono text-base">{timerLabel}</span>
-    </div>
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span className="font-mono text-lg font-semibold">
+        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+      </span>
+    </motion.div>
   )
 }

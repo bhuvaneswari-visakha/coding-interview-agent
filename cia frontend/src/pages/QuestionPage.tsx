@@ -62,18 +62,20 @@ export function QuestionPage({
   solutionError = '',
 }: QuestionPageProps) {
   return (
-    <section className="grid gap-4 lg:grid-cols-[minmax(360px,40%)_1fr] animate-fadeInUp">
-      <QuestionPanel
-        question={question}
-        attempts={attempts}
-        isHintEnabled={isHintEnabled}
-        isHintVisible={isHintVisible}
-        isSolutionVisible={isSolutionVisible}
-        onToggleHint={onToggleHint}
-        onToggleSolution={onToggleSolution}
-      />
+    <section className="grid gap-4 grid-cols-1 xl:grid-cols-[450px_1fr] animate-fadeInUp">
+      <div className="order-1 xl:order-1">
+        <QuestionPanel
+          question={question}
+          attempts={attempts}
+          isHintEnabled={isHintEnabled}
+          isHintVisible={isHintVisible}
+          isSolutionVisible={isSolutionVisible}
+          onToggleHint={onToggleHint}
+          onToggleSolution={onToggleSolution}
+        />
+      </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 order-2 xl:order-2">
         <CodeEditor
           code={code}
           language={language}

@@ -30,36 +30,28 @@ from models import InterviewSession, QuestionFeedback
 
 
 DIFFICULTY_ORDER = ["Easy", "Easy", "Medium", "Medium", "Hard"]
-QUESTION_MAX_TOKENS_PRIMARY = 2600
-QUESTION_MAX_TOKENS_RETRY = 3400
+QUESTION_MAX_TOKENS_PRIMARY = 1800  # Reduced from 2000
+QUESTION_MAX_TOKENS_RETRY = 2200    # Reduced from 2500
 
 QUESTION_GENERATION_PROMPT = """
-You are a senior technical interviewer.
+Generate EXACTLY 5 DSA coding questions: 2 Easy, 2 Medium, 1 Hard.
 
-Generate EXACTLY 5 different DSA coding questions.
-Distribution must be:
-1) Easy
-2) Easy
-3) Medium
-4) Medium
-5) Hard
+CRITICAL: Use SIMPLE input/output (space-separated or newline-separated, NO brackets/commas).
 
-Return ONLY valid JSON.
-Do not include markdown, prose, explanations, or code fences.
-JSON schema:
+Return ONLY valid JSON:
 {
   "questions": [
     {
-      "title": "string",
-      "difficulty": "Easy | Medium | Hard",
-      "problem_statement": "string",
-      "input_format": "string",
-      "output_format": "string",
-      "sample_input": "string",
-      "sample_output": "string",
-      "constraints": ["string", "string"],
-      "tags": ["string", "string"],
-      "hint": "string",
+      "title": "string (max 8 words)",
+      "difficulty": "Easy|Medium|Hard",
+      "problem_statement": "string (max 40 words)",
+      "input_format": "string (describe simple format)",
+      "output_format": "string (describe simple format)",
+      "sample_input": "string (simple format)",
+      "sample_output": "string (simple format)",
+      "constraints": ["string"],
+      "tags": ["string"],
+      "hint": "string (max 15 words)",
       "test_cases": [
         {"input": "string", "expected_output": "string"}
       ]
@@ -68,27 +60,20 @@ JSON schema:
 }
 
 Rules:
-- questions length must be exactly 5
-- each question should contain at least 4 test_cases
-- test cases must match the question statement
-- keep titles concise and unique
-- do NOT include solutions
+- Exactly 5 questions
+- At least 3 test_cases per question
+- Simple I/O format (e.g., "5\n1 2 3 4 5" not "[1,2,3,4,5]")
+- Keep concise
 """
 
 QUESTION_GENERATION_RETRY_PROMPT = """
-Return ONLY valid minified JSON in this exact format:
+Return ONLY valid minified JSON:
 {"questions":[{"title":"...","difficulty":"Easy|Medium|Hard","problem_statement":"...","input_format":"...","output_format":"...","sample_input":"...","sample_output":"...","constraints":["..."],"tags":["..."],"hint":"...","test_cases":[{"input":"...","expected_output":"..."}]}]}
 
-Generate exactly 5 DSA questions in order:
-1 Easy, 2 Easy, 3 Medium, 4 Medium, 5 Hard.
-
-Keep each field concise:
-- title under 8 words
-- problem_statement under 45 words
-- hint under 20 words
-- one sample and at least one test case per question
-
-No markdown. No backticks. No extra keys. No explanation text.
+5 questions: 2 Easy, 2 Medium, 1 Hard.
+Simple I/O (space/newline separated, NO brackets).
+3+ test cases each.
+Keep concise.
 """
 
 FEEDBACK_PROMPT_TEMPLATE = """
@@ -149,8 +134,26 @@ Generate a simple, beginner-level solution that:
 - Is easy for a beginner to understand and follow
 - Provide a complete solution in Python that reads from standard input and writes to standard output
 - Include a solve() function and a small main/driver that reads stdin and prints the result
-- Parse input robustly: testcases may include brackets, commas, or extra spaces (e.g., "[2, 7, 11, 15], 9").
-- Use a regex-based integer parser to extract all numbers from stdin, and interpret the last number as the target.
+
+CRITICAL INPUT PARSING:
+- Input format is SIMPLE: space-separated or newline-separated values
+- NO brackets, NO commas in the input
+- Example: "5\n1 2 3 4 5" means first line has count, second line has space-separated numbers
+- Parse using: input().split() for space-separated, or int(input()) for single values
+- DO NOT use eval(), ast.literal_eval(), or json.loads()
+
+Example input parsing patterns:
+```python
+# For single number:
+n = int(input())
+
+# For space-separated numbers on one line:
+numbers = list(map(int, input().split()))
+
+# For multiple lines:
+n = int(input())
+arr = list(map(int, input().split()))
+```
 
 The solution should be practical and correct, focusing on clarity over optimization.
 """
@@ -536,25 +539,27 @@ def _build_question_prompt(base_prompt: str, avoid_titles: list[str]) -> str:   
 async def generate_questions(user_id: str | None = None, db: AsyncSession = Depends(get_db)):
     avoid_titles: list[str] = []
 
+    # Optimize: Only fetch recent titles if user_id is provided, and limit to 10 instead of 20
     if user_id:
         stmt = (
             select(QuestionFeedback.title)
             .join(InterviewSession, InterviewSession.id == QuestionFeedback.interview_id)
             .where(InterviewSession.user_id == user_id)
             .order_by(InterviewSession.started_at.desc())
-            .limit(40)
+            .limit(10)  # Reduced from 20 to 10 for faster query
         )
         result = await db.execute(stmt)
         raw_titles = [row[0] for row in result.fetchall()]
-        avoid_titles = _unique_recent_titles(raw_titles, limit=24)
+        avoid_titles = _unique_recent_titles(raw_titles, limit=8)  # Reduced from 15 to 8
 
     prompt = _build_question_prompt(QUESTION_GENERATION_PROMPT, avoid_titles)
     retry_prompt = _build_question_prompt(QUESTION_GENERATION_RETRY_PROMPT, avoid_titles)
 
+    # Optimize: Reduce max_tokens for faster generation
     first_response = await generate_text(
         prompt,
-        max_tokens=QUESTION_MAX_TOKENS_PRIMARY,
-        temperature=0.7,
+        max_tokens=1500,  # Reduced from 2000 for faster generation
+        temperature=0.8,  # Slightly higher for faster, more creative responses
     )
     try:
         questions = _normalize_questions(first_response)
@@ -562,8 +567,8 @@ async def generate_questions(user_id: str | None = None, db: AsyncSession = Depe
     except HTTPException as first_error:
         retry_response = await generate_text(
             retry_prompt,
-            max_tokens=QUESTION_MAX_TOKENS_RETRY,
-            temperature=0.6,
+            max_tokens=1800,  # Reduced from 2500
+            temperature=0.7,
         )
         try:
             questions = _normalize_questions(retry_response)
