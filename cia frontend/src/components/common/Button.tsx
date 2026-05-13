@@ -1,4 +1,3 @@
-import { forwardRef } from 'react'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cn } from '../../utils/cn'
 
@@ -6,6 +5,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
+  isLoading?: boolean
+  loadingText?: string
 }
 
 export function Button({ 
@@ -13,6 +14,9 @@ export function Button({
   variant = 'primary', 
   size = 'md',
   className,
+  isLoading = false,
+  loadingText,
+  disabled,
   ...props 
 }: ButtonProps) {
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
@@ -33,9 +37,17 @@ export function Button({
   return (
     <button
       className={cn(baseStyles, variants[variant], sizes[size], className)}
+      disabled={disabled || isLoading}
       {...props}
     >
-      {children}
+      {isLoading ? (
+        <span className="flex items-center gap-2">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+          {loadingText || children}
+        </span>
+      ) : (
+        children
+      )}
     </button>
   )
 }

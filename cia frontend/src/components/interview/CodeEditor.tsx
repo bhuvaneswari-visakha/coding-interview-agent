@@ -29,7 +29,6 @@ export function CodeEditor({
   isSubmitting,
   isSolved,
   questionScore,
-  totalScore,
   onCodeChange,
   onLanguageChange,
   onRunCode,
