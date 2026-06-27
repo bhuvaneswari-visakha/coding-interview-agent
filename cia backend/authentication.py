@@ -64,6 +64,26 @@ def _normalize_database_url(raw_url: str) -> str:
 
 
 def _validate_hostname(hostname: str, port: int | None) -> None:
+    if ":" in hostname:
+        logger.error(
+            "Parsed DATABASE_URL hostname contains a port separator, which indicates a malformed URL: %s",
+            hostname,
+        )
+        raise RuntimeError(
+            "DATABASE_URL is malformed: hostname contains port information. "
+            "Ensure the URL uses the form 'postgresql+asyncpg://user:password@hostname:port/dbname'."
+        )
+
+    if hostname and "." not in hostname and hostname.lower() not in {"localhost", "127.0.0.1", "::1"}:
+        logger.error(
+            "Parsed DATABASE_URL hostname appears incomplete and may be missing a domain: %s",
+            hostname,
+        )
+        raise RuntimeError(
+            "DATABASE_URL hostname appears incomplete. "
+            "Render database hostnames must include the full domain, for example 'mydb.abcd123.render.com'."
+        )
+
     try:
         socket.getaddrinfo(hostname, port or 5432)
     except socket.gaierror as exc:
@@ -87,11 +107,47 @@ def get_database_url() -> str:
         )
 
     raw_url = raw_url.strip()
+    logger.info("Raw DATABASE_URL: %s", _mask_database_url(raw_url))
+
+    pre_parse = urlparse(raw_url)
+    logger.info(
+        "Parsed DATABASE_URL before normalization: scheme=%s hostname=%s port=%s netloc=%s path=%s",
+        pre_parse.scheme,
+        pre_parse.hostname,
+        pre_parse.port,
+        pre_parse.netloc,
+        pre_parse.path,
+    )
+
+    if not pre_parse.scheme:
+        logger.error("DATABASE_URL is malformed: missing URL scheme.")
+        raise RuntimeError(
+            "DATABASE_URL is malformed. It must start with 'postgresql+asyncpg://', 'postgresql://', or 'postgres://'."
+        )
+
+    if pre_parse.hostname is None and pre_parse.netloc:
+        logger.error(
+            "DATABASE_URL parsed hostname is missing but netloc is present: %s",
+            pre_parse.netloc,
+        )
+        raise RuntimeError(
+            "DATABASE_URL is malformed. Ensure the host is specified after '@' and before ':port'."
+        )
+
     normalized_url = _normalize_database_url(raw_url)
     parsed = urlparse(normalized_url)
 
+    logger.info(
+        "Parsed DATABASE_URL after normalization: scheme=%s hostname=%s port=%s netloc=%s path=%s",
+        parsed.scheme,
+        parsed.hostname,
+        parsed.port,
+        parsed.netloc,
+        parsed.path,
+    )
+
     if not parsed.hostname:
-        logger.error("DATABASE_URL hostname is invalid: %s", _mask_database_url(normalized_url))
+        logger.error("DATABASE_URL is invalid after normalization: %s", _mask_database_url(normalized_url))
         raise RuntimeError(
             "DATABASE_URL is invalid: hostname is missing or malformed."
         )
