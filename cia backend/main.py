@@ -1,17 +1,21 @@
+import logging
 import os
 from pathlib import Path
 from contextlib import asynccontextmanager
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 from fastapi import FastAPI     # frontend communicates with backend safely and securely.
 from fastapi.middleware.cors import CORSMiddleware
 
+ENV_PATH = Path(__file__).resolve().with_name(".env")
+load_dotenv(ENV_PATH)
+
 from authentication import initialize_database, router as authentication_router
 from execution_routes import router as execution_router
 from interview_routes import router as interview_router
-
-ENV_PATH = Path(__file__).resolve().with_name(".env")
-load_dotenv(ENV_PATH)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

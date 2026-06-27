@@ -14,8 +14,14 @@ ENV_PATH = Path(__file__).resolve().with_name(".env")
 load_dotenv(ENV_PATH)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
+if DATABASE_URL is None or not DATABASE_URL.strip():
     raise RuntimeError("DATABASE_URL is missing. Add it to your .env file.")
+
+DATABASE_URL = DATABASE_URL.strip()
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 
 async def apply_indexes():
